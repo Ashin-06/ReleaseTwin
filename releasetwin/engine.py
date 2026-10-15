@@ -110,6 +110,7 @@ def execute(request):
                 "baseline_bytes": a["bytes"] if a else 0,
                 "candidate_bytes": b["bytes"] if b else 0,
                 "candidate_executable": b["executable"] if b else False,
+                "baseline_executable": a["executable"] if a else False,
             }
         )
     findings = []
@@ -125,7 +126,7 @@ def execute(request):
     executables = [
         e["path"]
         for e in events
-        if e["change"] in ("added", "mode_changed") and e["candidate_executable"]
+        if e["candidate_executable"] and not e["baseline_executable"]
     ]
     if executables:
         findings.append(
@@ -406,8 +407,9 @@ def cli_request(args):
             password=password.encode() if password else None,
         )
         policy = read_json(Path(args.policy).read_bytes())
+        signed = canonical(sign(artifact, policy, key))
         with args.out.open("xb") as output:
-            output.write(canonical(sign(artifact, policy, key)))
+            output.write(signed)
         print(str(args.out))
         raise SystemExit(0)
     request = {

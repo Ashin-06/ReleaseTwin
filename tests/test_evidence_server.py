@@ -82,7 +82,13 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;", rendered)
 
     def test_json_rejects_duplicate_keys_and_nonfinite_values(self):
-        for body in (b'{"a":1,"a":2}', b'{"a":NaN}', b'{"a":Infinity}'):
+        for body in (
+            b'{"a":1,"a":2}',
+            b'{"a":NaN}',
+            b'{"a":Infinity}',
+            b'{"a":1e999}',
+            b'{"a":-1e999}',
+        ):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 lab.read_json(body)
 
@@ -204,3 +210,27 @@ class ServerTests(unittest.TestCase):
             response.read()
         finally:
             connection.close()
+
+    def test_raw_editor_json_is_strict_and_server_recovers(self):
+        headers = {
+            "Content-Type": "application/json",
+            "X-Lab-Token": self.meta["token"],
+        }
+        for route in ("/api/run", "/api/parse"):
+            for body in (b'{"duplicate":1,"duplicate":2}', b'{"value":1e999}', b"{"):
+                request = Request(
+                    self.base + route, data=body, headers=headers, method="POST"
+                )
+                with (
+                    self.subTest(route=route, body=body),
+                    self.assertRaises(HTTPError) as caught,
+                ):
+                    urlopen(request, timeout=5)
+                self.assertEqual(caught.exception.code, 400)
+                self.assertIn("error", json.loads(caught.exception.read()))
+        status, parsed = self.post(
+            "/api/parse", {"nested": {"a": [1, 2, 3]}, "label": "<script>"}
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(parsed["input"]["nested"]["a"], [1, 2, 3])
+        self.assertEqual(self.post("/api/run", engine.presets()[0]["input"])[0], 200)

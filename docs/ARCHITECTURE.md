@@ -15,6 +15,7 @@ All routes require an exact local Host header with the listening port. GET `/api
 | --- | --- |
 | GET `/` | Workbench |
 | GET `/api/meta` | Metadata, presets, and local session token |
+| POST `/api/parse` | Strict bounded JSON parsing for editor formatting; no experiment runs |
 | POST `/api/run` | Validate and return a deterministic result |
 | POST `/api/save` | Re-execute input, save a new case, return report/bundle links (201) |
 | GET `/api/cases` | List local saved case metadata |

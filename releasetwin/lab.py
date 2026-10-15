@@ -6,6 +6,7 @@ import hashlib
 import html
 import io
 import json
+import math
 import secrets
 import sys
 import threading
@@ -16,7 +17,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-VERSION = "1.0.0"
+from . import __version__
+
+VERSION = __version__
 MAX_BODY = 12 * 1024 * 1024
 
 
@@ -46,8 +49,19 @@ def read_json(data):
     def constant(value):
         raise ValueError(f"Non-finite JSON number: {value}")
 
+    def finite_float(value):
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("JSON number exceeds the finite floating-point range")
+        return number
+
     try:
-        return json.loads(data, object_pairs_hook=_pairs, parse_constant=constant)
+        return json.loads(
+            data,
+            object_pairs_hook=_pairs,
+            parse_constant=constant,
+            parse_float=finite_float,
+        )
     except (UnicodeError, RecursionError) as exc:
         raise ValueError("Invalid or excessively nested JSON") from exc
 
@@ -347,6 +361,8 @@ def create_server(engine, port, data_dir):
                     raise ValueError("Incomplete body")
                 data = read_json(raw)
                 path = urlsplit(self.path).path
+                if path == "/api/parse":
+                    return self._send(200, {"input": data})
                 if path == "/api/minimize" and hasattr(engine, "minimize"):
                     return self._send(200, engine.minimize(data))
                 if path not in ("/api/run", "/api/save"):
@@ -406,6 +422,7 @@ def cli(engine):
     args = parser.parse_args()
     try:
         if args.command == "serve":
+            integer(args.port, "port", 0, 65535)
             server = create_server(engine, args.port, args.data_dir)
             print(
                 f"{engine.APP_NAME} {VERSION}: http://127.0.0.1:{server.server_port}",

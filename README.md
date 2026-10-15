@@ -72,6 +72,8 @@ Every saved case includes canonical input/result JSON, a standalone escaped HTML
 
 ## Validation
 
+[Version 1.0.1 validation details](docs/VALIDATION.md) records regression coverage and the manual browser checks. Replay requires the software version recorded in the case manifest; use the matching release tag for older evidence.
+
 ```sh
 python -m unittest discover -s tests -v
 python -m pip install ruff

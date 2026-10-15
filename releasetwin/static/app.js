@@ -2,16 +2,16 @@ const $ = id => document.getElementById(id);
 let meta, lastResult, lastInput, busy = false;
 const node = (tag, value, className) => { const element = document.createElement(tag); if (value !== undefined) element.textContent = String(value); if (className) element.className = className; return element; };
 function notice(message = '', good = false) { $('notice').textContent = message; $('notice').className = good ? 'success' : ''; }
-async function api(path, data) {
-  const response = await fetch(path, data === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Lab-Token': meta.token }, body: JSON.stringify(data) });
+async function api(path, data, raw = false) {
+  const response = await fetch(path, data === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Lab-Token': meta.token }, body: raw ? data : JSON.stringify(data) });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
   return result;
 }
-function setBusy(value) { busy = value; $('run').disabled = value; $('save').disabled = value || !lastResult; $('minimize').disabled = value || !lastResult; $('run').textContent = value ? 'Running…' : 'Run experiment ↗'; }
+function setBusy(value) { busy = value; $('run').disabled = value; $('save').disabled = value || !lastResult; $('minimize').disabled = value || !lastResult; $('run').textContent = value ? 'Working…' : 'Run experiment ↗'; $('preset').disabled = value; $('format').disabled = value; $('input').readOnly = value; $('baselineFile').disabled = value; $('candidateFile').disabled = value; }
 function selectPreset() {
   const item = meta.presets.find(p => p.id === $('preset').value);
-  $('input').value = JSON.stringify(item.input, null, 2);
+  $('input').value = JSON.stringify(item.input, null, 2); $('baselineFile').value = ''; $('candidateFile').value = '';
   $('presetDescription').textContent = item.summary;
   notice('Scenario loaded. Run it to update the observations.', true);
 }
@@ -59,13 +59,13 @@ function render(result, input) {
 async function run() {
   if (busy) return;
   notice(); setBusy(true);
-  try { const input = JSON.parse($('input').value); render(await api('/api/run', input), input); notice('Run completed. All displayed measurements come from this result.', true); }
-  catch (error) { notice(error.message); $('runState').textContent = 'RUN FAILED'; }
+  try { const raw = $('input').value; const result = await api('/api/run', raw, true); render(result, JSON.parse(raw)); notice('Run completed. All displayed measurements come from this result.', true); }
+  catch (error) { notice(error.message + (lastResult ? ' Showing the last successful result.' : '')); $('runState').textContent = lastResult ? 'LAST SUCCESS · NEW RUN FAILED' : 'RUN FAILED'; }
   finally { setBusy(false); }
 }
 $('run').addEventListener('click', run);
 $('preset').addEventListener('change', selectPreset);
-$('format').addEventListener('click', () => { try { $('input').value = JSON.stringify(JSON.parse($('input').value), null, 2); notice(); } catch(e) { notice(e.message); } });
+$('format').addEventListener('click', async () => { if (busy) return; setBusy(true); try { const parsed = await api('/api/parse', $('input').value, true); $('input').value = JSON.stringify(parsed.input, null, 2); notice(); } catch(e) { notice(e.message); } finally { setBusy(false); } });
 $('failOnly').addEventListener('change', renderLedger);
 $('save').addEventListener('click', async () => {
   if (!lastInput || busy) return; setBusy(true); notice();
@@ -108,9 +108,10 @@ document.querySelectorAll('[data-page]').forEach(button => button.addEventListen
   notice(); if (button.dataset.page === 'cases') loadCases();
 }));
 async function loadFile(event, key) {
-  const file = event.target.files[0]; if (!file) return;
+  const file = event.target.files[0]; if (!file || busy) return;
   if (file.size > 4 * 1024 * 1024) return notice('Archive limit: 4 MiB per ZIP in both the browser and CLI.');
-  try { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192)); const input = JSON.parse($('input').value); input[key] = btoa(binary); $('input').value = JSON.stringify(input, null, 2); notice('Archive loaded. Review the provenance policy and run the comparison.', true); } catch(e) { notice(e.message); }
+  setBusy(true); notice('Loading archive…', true);
+  try { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192)); const parsed = await api('/api/parse', $('input').value, true); const input = parsed.input; input[key] = btoa(binary); $('input').value = JSON.stringify(input, null, 2); notice('Archive loaded. Review the provenance policy and run the comparison.', true); } catch(e) { notice(e.message); } finally { setBusy(false); }
 }
 $('baselineFile').addEventListener('change', event => loadFile(event, 'baseline_zip'));
 $('candidateFile').addEventListener('change', event => loadFile(event, 'candidate_zip'));
@@ -121,5 +122,5 @@ try {
   $('preset').replaceChildren(...meta.presets.map(p => { const option = node('option', p.title); option.value = p.id; return option; }));
   $('capabilities').replaceChildren(...meta.capabilities.map(s => node('li', s))); $('methodTitle').textContent = `${meta.name}: what the result means`;
   $('minimize').hidden = meta.name !== 'TenantScope'; $('releaseFiles').hidden = meta.name !== 'ReleaseTwin';
-  selectPreset(); notice();
+  selectPreset(); setBusy(false); notice();
 } catch(e) { notice(`Workbench could not initialize: ${e.message}`); $('heading').textContent = 'Connection unavailable'; $('run').disabled = true; }

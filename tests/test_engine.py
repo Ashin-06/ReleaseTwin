@@ -3,6 +3,7 @@ import copy
 import hashlib
 import io
 import stat
+import struct
 import tempfile
 import unittest
 import zipfile
@@ -145,3 +146,95 @@ class ReleaseTests(unittest.TestCase):
         request["candidate_behavior"]["cases"][0]["stdout_sha256"] = "invalid"
         with self.assertRaises(ValueError):
             engine.execute(request)
+
+    def test_content_change_and_new_executable_permission_are_both_reported(self):
+        request = self.preset("clean")
+        request["baseline_zip"] = base64.b64encode(
+            self.zip_entries([("run.sh", b"old", stat.S_IFREG | 0o644)])
+        ).decode()
+        request["candidate_zip"] = base64.b64encode(
+            self.zip_entries([("run.sh", b"new", stat.S_IFREG | 0o755)])
+        ).decode()
+        for key in ("attestation", "policy", "trusted_key"):
+            del request[key]
+        result = engine.execute(request)
+        self.assertEqual(result["events"][0]["change"], "modified")
+        self.assertFalse(result["events"][0]["baseline_executable"])
+        self.assertTrue(result["events"][0]["candidate_executable"])
+        self.assertIn(
+            "New executable capability in the candidate",
+            [f["title"] for f in result["findings"]],
+        )
+
+    def test_ambiguous_directories_and_special_entries_are_rejected(self):
+        for entries in (
+            [("a/", b"", stat.S_IFDIR | 0o755), ("a", b"x", stat.S_IFREG | 0o644)],
+            [("a/x", b"x", 0), ("A/y", b"y", 0)],
+            [("a//", b"", stat.S_IFDIR | 0o755)],
+            [("pipe", b"", stat.S_IFIFO | 0o600)],
+            [("directory", b"", stat.S_IFDIR | 0o755)],
+        ):
+            with self.subTest(entries=entries), self.assertRaises(ValueError):
+                inventory_zip(self.zip_entries(entries))
+
+    def test_corrupt_deflate_stream_is_a_clean_validation_error(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("sample.txt", b"sample content with distinct words")
+        raw = bytearray(buffer.getvalue())
+        filename, extra = struct.unpack_from("<HH", raw, 26)
+        start = 30 + filename + extra
+        raw[start : start + 3] = b"\xff\xff\xff"
+        with self.assertRaises(ValueError):
+            inventory_zip(bytes(raw))
+
+    def test_unreadable_directory_walk_fails_instead_of_omitting_content(self):
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as directory:
+
+            def denied(*args, **kwargs):
+                kwargs["onerror"](PermissionError("denied fixture subdirectory"))
+                return iter(())
+
+            with (
+                patch("releasetwin.artifacts.os.walk", side_effect=denied),
+                self.assertRaises(ValueError),
+            ):
+                pack_directory(directory)
+
+    def test_invalid_attestation_policy_does_not_create_an_empty_output(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        import json
+        import os
+
+        request = self.preset("clean")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "artifact.zip").write_bytes(
+                base64.b64decode(request["candidate_zip"])
+            )
+            key = Ed25519PrivateKey.generate()
+            (root / "key.pem").write_bytes(
+                key.private_bytes(
+                    serialization.Encoding.PEM,
+                    serialization.PrivateFormat.PKCS8,
+                    serialization.NoEncryption(),
+                )
+            )
+            (root / "policy.json").write_text(json.dumps({}))
+            output = root / "attestation.json"
+            args = SimpleNamespace(
+                command="attest",
+                artifact=root / "artifact.zip",
+                private_key=root / "key.pem",
+                policy=root / "policy.json",
+                out=output,
+            )
+            with (
+                patch.dict(os.environ, {"RELEASETWIN_KEY_PASSWORD": ""}),
+                self.assertRaises(ValueError),
+            ):
+                engine.cli_request(args)
+            self.assertFalse(output.exists())

@@ -1,6 +1,7 @@
 """Local CLI, loopback workbench, and reproducible evidence storage."""
 
 import argparse
+import base64
 import hashlib
 import html
 import io
@@ -196,7 +197,13 @@ def create_server(engine, port, data_dir):
             super().setup()
             self.connection.settimeout(8)
 
-        def _send(self, status, body, content_type="application/json; charset=utf-8"):
+        def _send(
+            self,
+            status,
+            body,
+            content_type="application/json; charset=utf-8",
+            report=False,
+        ):
             if isinstance(body, (dict, list)):
                 body = canonical(body)
             elif isinstance(body, str):
@@ -207,10 +214,16 @@ def create_server(engine, port, data_dir):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
-            self.send_header(
-                "Content-Security-Policy",
-                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
-            )
+            policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+            if report:
+                # Allow only this verified report's generated style block, not
+                # arbitrary inline styles or scripts from scenario content.
+                style = body.split(b"<style>", 1)[1].split(b"</style>", 1)[0]
+                digest = base64.b64encode(hashlib.sha256(style).digest()).decode(
+                    "ascii"
+                )
+                policy = f"default-src 'none'; style-src 'sha256-{digest}'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+            self.send_header("Content-Security-Policy", policy)
             self.send_header("Connection", "close")
             self.end_headers()
             self.wfile.write(body)
@@ -283,6 +296,7 @@ def create_server(engine, port, data_dir):
                             200,
                             (directory / "report.html").read_bytes(),
                             "text/html; charset=utf-8",
+                            report=True,
                         )
                     if kind == "bundle":
                         return self._send(

@@ -136,6 +136,16 @@ class ServerTests(unittest.TestCase):
             self.base + f"/api/cases/{saved['id']}/verify", timeout=15
         ) as response:
             self.assertTrue(json.loads(response.read())["ok"])
+        with urlopen(self.base + saved["report_url"], timeout=15) as response:
+            body = response.read()
+            policy = response.headers["Content-Security-Policy"]
+            import base64
+
+            style = body.split(b"<style>", 1)[1].split(b"</style>", 1)[0]
+            digest = base64.b64encode(hashlib.sha256(style).digest()).decode("ascii")
+            self.assertIn(f"style-src 'sha256-{digest}'", policy)
+            self.assertIn("default-src 'none'", policy)
+            self.assertNotIn("unsafe-inline", policy)
         with urlopen(self.base + saved["bundle_url"], timeout=15) as response:
             self.assertEqual(response.headers["Content-Type"], "application/zip")
             self.assertTrue(response.read().startswith(b"PK"))

@@ -1,0 +1,38 @@
+[
+  {
+    "scenario": "tampered",
+    "baseline_files": 2,
+    "candidate_files": 3,
+    "changed_files": 3,
+    "identical_zip": false,
+    "provenance": "failed",
+    "behavior_changes": 0
+  },
+  {
+    "scenario": "clean",
+    "baseline_files": 2,
+    "candidate_files": 2,
+    "changed_files": 0,
+    "identical_zip": true,
+    "provenance": "verified",
+    "behavior_changes": 0
+  },
+  {
+    "scenario": "signed-change",
+    "baseline_files": 2,
+    "candidate_files": 3,
+    "changed_files": 3,
+    "identical_zip": false,
+    "provenance": "verified",
+    "behavior_changes": 0
+  },
+  {
+    "scenario": "behavior",
+    "baseline_files": 2,
+    "candidate_files": 2,
+    "changed_files": 0,
+    "identical_zip": true,
+    "provenance": "verified",
+    "behavior_changes": 1
+  }
+]

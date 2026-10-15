@@ -1,0 +1,21 @@
+{
+  "baseline_zip": "UEsDBBQAAAAAAAAAIVw3vfx/EwAAABMAAAAGAAAAYXBwLnB5cHJpbnQoInJlbGVhc2UgMSIpClBLAwQUAAAAAAAAACFc9y11KxQAAAAUAAAACwAAAGNvbmZpZy5qc29ueyJ0ZWxlbWV0cnkiOmZhbHNlfQpQSwECFAAUAAAAAAAAACFcN738fxMAAAATAAAABgAAAAAAAAAAAAAApIEAAAAAYXBwLnB5UEsBAhQAFAAAAAAAAAAhXPctdSsUAAAAFAAAAAsAAAAAAAAAAAAAAKSBNwAAAGNvbmZpZy5qc29uUEsFBgAAAAACAAIAbQAAAHQAAAAAAA==",
+  "candidate_zip": "UEsDBBQAAAAAAAAAIVw3vfx/EwAAABMAAAAGAAAAYXBwLnB5cHJpbnQoInJlbGVhc2UgMSIpClBLAwQUAAAAAAAAACFc9y11KxQAAAAUAAAACwAAAGNvbmZpZy5qc29ueyJ0ZWxlbWV0cnkiOmZhbHNlfQpQSwECFAAUAAAAAAAAACFcN738fxMAAAATAAAABgAAAAAAAAAAAAAApIEAAAAAYXBwLnB5UEsBAhQAFAAAAAAAAAAhXPctdSsUAAAAFAAAAAsAAAAAAAAAAAAAAKSBNwAAAGNvbmZpZy5qc29uUEsFBgAAAAACAAIAbQAAAHQAAAAAAA==",
+  "attestation": {
+    "payload": {
+      "schema_version": 1,
+      "repository": "https://example.invalid/owner/release-demo",
+      "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "builder": "local-demo-builder",
+      "artifact_sha256": "2c11cf9b106f01e8c94af37a729a711e492ddf46b1169571e2594fae6b598154"
+    },
+    "key_id": "ed25519:d8b2b0c8a8025ece99d3d621ee6b648038307268268fb729d85f24eeebc390f4",
+    "signature": "vhAkO/f+J+s2faYKcmarCVI4bN5JrS75cRWNECqQwVKfPy6a73Jd72OCRv+HR0//7Zyl5YcWRNVChlgdrrZaCQ=="
+  },
+  "trusted_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA6qZJZiiK7XVdvpYhIEPOikr3iIqiu5tEpig1iyZk0Is=\n-----END PUBLIC KEY-----\n",
+  "policy": {
+    "repository": "https://example.invalid/owner/release-demo",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "builder": "local-demo-builder"
+  }
+}

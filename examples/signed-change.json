@@ -1,0 +1,21 @@
+{
+  "baseline_zip": "UEsDBBQAAAAAAAAAIVw3vfx/EwAAABMAAAAGAAAAYXBwLnB5cHJpbnQoInJlbGVhc2UgMSIpClBLAwQUAAAAAAAAACFc9y11KxQAAAAUAAAACwAAAGNvbmZpZy5qc29ueyJ0ZWxlbWV0cnkiOmZhbHNlfQpQSwECFAAUAAAAAAAAACFcN738fxMAAAATAAAABgAAAAAAAAAAAAAApIEAAAAAYXBwLnB5UEsBAhQAFAAAAAAAAAAhXPctdSsUAAAAFAAAAAsAAAAAAAAAAAAAAKSBNwAAAGNvbmZpZy5qc29uUEsFBgAAAAACAAIAbQAAAHQAAAAAAA==",
+  "candidate_zip": "UEsDBBQAAAAAAAAAIVzZEkltEwAAABMAAAAGAAAAYXBwLnB5cHJpbnQoInJlbGVhc2UgMiIpClBLAwQUAAAAAAAAACFcReCD3hMAAAATAAAACwAAAGNvbmZpZy5qc29ueyJ0ZWxlbWV0cnkiOnRydWV9ClBLAwQUAAAAAAAAACFc2U0E0yUAAAAlAAAAEAAAAHNjcmlwdHMvc3RhcnQuc2gjIS9iaW4vc2gKcHJpbnRmICJzeW50aGV0aWMgZml4dHVyZSIKUEsBAhQAFAAAAAAAAAAhXNkSSW0TAAAAEwAAAAYAAAAAAAAAAAAAAKSBAAAAAGFwcC5weVBLAQIUABQAAAAAAAAAIVxF4IPeEwAAABMAAAALAAAAAAAAAAAAAACkgTcAAABjb25maWcuanNvblBLAQIUABQAAAAAAAAAIVzZTQTTJQAAACUAAAAQAAAAAAAAAAAAAADtgXMAAABzY3JpcHRzL3N0YXJ0LnNoUEsFBgAAAAADAAMAqwAAAMYAAAAAAA==",
+  "attestation": {
+    "payload": {
+      "schema_version": 1,
+      "repository": "https://example.invalid/owner/release-demo",
+      "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "builder": "local-demo-builder",
+      "artifact_sha256": "03df0af1f7b8ff81b376bafa35acd766bc7161c3ca2f936dccf1fe8625061d7a"
+    },
+    "key_id": "ed25519:d8b2b0c8a8025ece99d3d621ee6b648038307268268fb729d85f24eeebc390f4",
+    "signature": "QXBZ1zEJka0740fGS+U8EYi/eMsuhKIgB2jJ5MfSOy+cTOHng+rPsDlF8ZzFHrPKCvIiWiQqm57d+qdT9wgxBw=="
+  },
+  "trusted_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA6qZJZiiK7XVdvpYhIEPOikr3iIqiu5tEpig1iyZk0Is=\n-----END PUBLIC KEY-----\n",
+  "policy": {
+    "repository": "https://example.invalid/owner/release-demo",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "builder": "local-demo-builder"
+  }
+}

@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.lab/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+.env
+*.private.pem
+keys/
+
+build/
+.ruff_cache/

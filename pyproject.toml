@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "releasetwin"
+version = "1.0.0"
+description = "Compare release artifacts, trusted provenance, and recorded behavior."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Ashin Murugan"}]
+dependencies = ["cryptography>=43,<51"]
+
+[project.scripts]
+releasetwin = "releasetwin.entry:main"
+
+[tool.setuptools.packages.find]
+include = ["releasetwin*"]
+
+[tool.setuptools.package-data]
+releasetwin = ["static/*"]
